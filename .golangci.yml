@@ -1,0 +1,48 @@
+run:
+  allow-parallel-runners: true
+linters:
+  enable:
+    - revive
+    - govet
+    - gocritic
+    - unconvert
+    - whitespace
+    - nolintlint
+linters-settings:
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+  govet:
+    enable:
+      - nilness
+      - copylocks
+  gocritic:
+    enable-all: true
+    disabled-checks:
+      - whyNoLint # we replace this with nolintlint, which also picks up unused nolint directives
+  nolintlint:
+    allow-unused: false
+    require-explanation: true
+    require-specific: true
