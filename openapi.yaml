@@ -1,0 +1,68 @@
+info:
+  title: An api to retrieve quotes
+  version: 0.0.0
+  description: This api is part of the coding assignment given to Piet de Vries
+paths:
+  /quote:
+    get:
+      operationId: getRandomQuote
+      summary: Get random quote
+      responses:
+        "200":
+          description:
+            The request was successful, and the server has returned the
+            requested resource in the response body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        "500":
+          $ref: "#/components/responses/InternalServerErrror"
+      parameters: []
+      description: Returns a random quote
+      tags:
+        - quote
+openapi: 3.1.0
+components:
+  responses:
+    InternalServerErrror:
+      description:
+        The server encountered an unexpected condition that prevented it
+        from fulfilling the request. Report the issue to the support team if it
+        persists.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: unknown error
+            required:
+              - message
+            example:
+              message: unknown error
+  schemas:
+    Quote:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 7
+        quote:
+          type: string
+          example: A quote
+        author:
+          type: string
+          example: A name
+      required:
+        - quote
+        - author
+        - id
+      description: A basic quote
+      example:
+        id: 7
+        quote: A quote
+        author: A name
+tags:
+  - name: quote

@@ -5,7 +5,6 @@ with pkgs;
 mkShell {
   buildInputs = [
     go
-    golangci-lint
   ];
   # disabling CGO happens automatically when building, but is on by default.
   # To prevent unexpected differences, we dissable it in our shell.
