@@ -1,9 +1,11 @@
 package services
 
 import (
+	"os"
 	"testing"
 
 	"github.com/pietdevries94/Kabisa/models"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -31,7 +33,8 @@ func TestQuoteServiceGetRandomQuote(t *testing.T) {
 		}, nil)
 
 		// We inject the mocked repo into the service and expect the same quote back
-		res, err := NewQuoteService(mockedDummyJsonRepo).GetRandomQuote()
+		logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+		res, err := NewQuoteService(&logger, mockedDummyJsonRepo).GetRandomQuote()
 		require.NoError(t, err)
 		assert.Equal(t, &models.Quote{
 			ID:     663,

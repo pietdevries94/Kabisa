@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/pietdevries94/Kabisa/models"
 	"github.com/pietdevries94/Kabisa/repositories"
+	"github.com/rs/zerolog"
 )
 
 type QuoteService interface {
@@ -10,11 +11,13 @@ type QuoteService interface {
 }
 
 type quoteService struct {
+	logger        *zerolog.Logger
 	dummyJsonRepo repositories.DummyJsonRepo
 }
 
-func NewQuoteService(dummyJsonRepo repositories.DummyJsonRepo) QuoteService {
+func NewQuoteService(logger *zerolog.Logger, dummyJsonRepo repositories.DummyJsonRepo) QuoteService {
 	return &quoteService{
+		logger:        logger,
 		dummyJsonRepo: dummyJsonRepo,
 	}
 }

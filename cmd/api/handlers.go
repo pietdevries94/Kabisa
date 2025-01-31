@@ -8,7 +8,7 @@ import (
 func (app *application) GetQuoteHandler(w http.ResponseWriter, _ *http.Request) {
 	quote, err := app.quoteService.GetRandomQuote()
 	if err != nil {
-		// TODO: log the error
+		app.logger.Error().Err(err).Msg("unexpected error when calling quoteService.GetRandomQuote")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -16,7 +16,7 @@ func (app *application) GetQuoteHandler(w http.ResponseWriter, _ *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(quote)
 	if err != nil {
-		// TODO: log the error
+		app.logger.Error().Err(err).Msg("unexpected error when encoding quote handler to json")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

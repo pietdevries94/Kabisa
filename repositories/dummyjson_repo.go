@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/pietdevries94/Kabisa/models"
+	"github.com/rs/zerolog"
 )
 
 // DummyJsonRepo handles all calls to the dummyjson.com api.
@@ -19,18 +20,23 @@ type httpClient interface {
 }
 
 type dummyJsonRepo struct {
-	client httpClient
+	logger     *zerolog.Logger
+	httpClient httpClient
 }
 
 // NewDummyJsonRepo returns a new DummyJsonRepo, which handles all calls to the dummyjson.com api.
-func NewDummyJsonRepo(client httpClient) DummyJsonRepo {
-	return &dummyJsonRepo{client: client}
+func NewDummyJsonRepo(logger *zerolog.Logger, httpClient httpClient) DummyJsonRepo {
+	return &dummyJsonRepo{
+		logger:     logger,
+		httpClient: httpClient,
+	}
 }
 
 // GetRandomQuote retrieves a quote using the random feature of dummyjson
 func (repo *dummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
-	resp, err := repo.client.Get("https://dummyjson.com/quotes/random")
+	resp, err := repo.httpClient.Get("https://dummyjson.com/quotes/random")
 	if err != nil {
+		repo.logger.Error().Err(err).Msg("unexpected error when retrieving random quote from api")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -40,6 +46,7 @@ func (repo *dummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
 	var quote *models.Quote
 	err = json.NewDecoder(resp.Body).Decode(&quote)
 	if err != nil {
+		repo.logger.Error().Err(err).Msg("unexpected error when decoding result to models.Quote")
 		return nil, err
 	}
 

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/pietdevries94/Kabisa/models"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -36,16 +38,17 @@ func CreateMockedResponse(statusCode int, bodyReader io.Reader) *http.Response {
 
 func TestDummyJsonRepoGetRandomQuote(t *testing.T) {
 	t.Run("returns quote when receiving expected response from api", func(t *testing.T) {
-		mockedClient := new(MockedHttpClient)
+		mockedHttpClient := new(MockedHttpClient)
 
 		// The body is a copy of an actual response from the api
 		mockedResponse := CreateMockedResponse(http.StatusOK, bytes.NewBufferString(`{"id":414,"quote":"When We Lose One Blessing, Another Is Often Most Unexpectedly Given In Its Place.","author":"C. S. Lewis"}`))
-		mockedClient.On("Get", "https://dummyjson.com/quotes/random").
+		mockedHttpClient.On("Get", "https://dummyjson.com/quotes/random").
 			Once().
 			Return(mockedResponse, nil)
 
 		// We inject the mocked repo and expect to get the same quote back, but now as a struct
-		res, err := NewDummyJsonRepo(mockedClient).GetRandomQuote()
+		logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+		res, err := NewDummyJsonRepo(&logger, mockedHttpClient).GetRandomQuote()
 		require.NoError(t, err)
 		assert.Equal(t, &models.Quote{
 			ID:     414,
