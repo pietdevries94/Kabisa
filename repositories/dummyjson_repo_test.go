@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -37,24 +38,64 @@ func CreateMockedResponse(statusCode int, bodyReader io.Reader) *http.Response {
 }
 
 func TestDummyJsonRepoGetRandomQuote(t *testing.T) {
-	t.Run("returns quote when receiving expected response from api", func(t *testing.T) {
-		mockedHttpClient := new(MockedHttpClient)
+	type Test struct {
+		mockedResponse *http.Response
+		mockedError    error
+		expectedResult *models.Quote
+		expectedError  error
+	}
 
-		// The body is a copy of an actual response from the api
-		mockedResponse := CreateMockedResponse(http.StatusOK, bytes.NewBufferString(`{"id":414,"quote":"When We Lose One Blessing, Another Is Often Most Unexpectedly Given In Its Place.","author":"C. S. Lewis"}`))
-		mockedHttpClient.On("Get", "https://dummyjson.com/quotes/random").
-			Once().
-			Return(mockedResponse, nil)
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
 
-		// We inject the mocked repo and expect to get the same quote back, but now as a struct
-		logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
-		res, err := NewDummyJsonRepo(&logger, mockedHttpClient).GetRandomQuote()
-		require.NoError(t, err)
-		assert.Equal(t, &models.Quote{
+			mockedHttpClient := new(MockedHttpClient)
+
+			// The body is a copy of an actual response from the api
+			mockedHttpClient.On("Get", "https://dummyjson.com/quotes/random").
+				Once().
+				Return(tt.mockedResponse, tt.mockedError)
+
+			// We inject the mocked repo and expect to get the same quote back, but now as a struct
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			res, err := NewDummyJsonRepo(&logger, mockedHttpClient).GetRandomQuote()
+
+			if tt.expectedError != nil {
+				require.ErrorContains(t, err, tt.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expectedResult, res)
+		}
+	}
+
+	t.Run("returns quote when receiving expected response from api", run(Test{
+		mockedResponse: CreateMockedResponse(http.StatusOK, bytes.NewBufferString(`{"id":414,"quote":"When We Lose One Blessing, Another Is Often Most Unexpectedly Given In Its Place.","author":"C. S. Lewis"}`)),
+		expectedResult: &models.Quote{
 			ID:     414,
 			Quote:  "When We Lose One Blessing, Another Is Often Most Unexpectedly Given In Its Place.",
 			Author: "C. S. Lewis",
-		}, res)
-	})
-	// TODO extend tests and convert to closure tests
+		},
+	}))
+
+	t.Run("returns an error when client.Get returns an error", run(Test{
+		mockedError:   http.ErrHandlerTimeout,
+		expectedError: http.ErrHandlerTimeout,
+	}))
+
+	t.Run("returns an error when the client.Get response returns no body", run(Test{
+		mockedResponse: CreateMockedResponse(http.StatusOK, nil),
+		expectedError:  errors.New("no body received"),
+	}))
+
+	t.Run("returns an error when the client.Get response doesn't return a 200", run(Test{
+		mockedResponse: CreateMockedResponse(http.StatusTeapot, bytes.NewBufferString("{}")),
+		expectedError:  errors.New("unexpected status code received: 418"),
+	}))
+
+	t.Run("returns an error when the cliet.Get response body is not valid json", run(Test{
+		mockedResponse: CreateMockedResponse(http.StatusOK, bytes.NewBufferString("<Quote>I'm XML<Quote>")),
+		expectedError:  errors.New("unexpected error when decoding result to models.Quote"),
+	}))
 }

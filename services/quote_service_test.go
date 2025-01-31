@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -22,25 +23,51 @@ func (m *MockedDummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
 }
 
 func TestQuoteServiceGetRandomQuote(t *testing.T) {
-	t.Run("returns quote from dummyJsonRepo", func(t *testing.T) {
-		mockedDummyJsonRepo := new(MockedDummyJsonRepo)
+	type Test struct {
+		mockedJsonRepoQuote *models.Quote
+		mockedJsonRepoError error
+		expectedResult      *models.Quote
+		expectedError       error
+	}
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
 
+			mockedDummyJsonRepo := new(MockedDummyJsonRepo)
+			mockedDummyJsonRepo.On("GetRandomQuote").Once().Return(tt.mockedJsonRepoQuote, tt.mockedJsonRepoError)
+
+			// We inject the mocked repo into the service and expect the same quote back
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			res, err := NewQuoteService(&logger, mockedDummyJsonRepo).GetRandomQuote()
+
+			if tt.expectedError != nil {
+				require.ErrorContains(t, err, tt.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expectedResult, res)
+		}
+	}
+
+	t.Run("returns quote from dummyJsonRepo", run(Test{
 		// The mocked quote is based on an actual response from the underlying api
-		mockedDummyJsonRepo.On("GetRandomQuote").Once().Return(&models.Quote{
+		mockedJsonRepoQuote: &models.Quote{
 			ID:     663,
 			Quote:  "Never Mistake Motion For Action.",
 			Author: "Ernest Hemingway",
-		}, nil)
+		},
+		expectedResult: &models.Quote{
+			ID:     663,
+			Quote:  "Never Mistake Motion For Action.",
+			Author: "Ernest Hemingway",
+		},
+	}))
 
-		// We inject the mocked repo into the service and expect the same quote back
-		logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
-		res, err := NewQuoteService(&logger, mockedDummyJsonRepo).GetRandomQuote()
-		require.NoError(t, err)
-		assert.Equal(t, &models.Quote{
-			ID:     663,
-			Quote:  "Never Mistake Motion For Action.",
-			Author: "Ernest Hemingway",
-		}, res)
-	})
-	// TODO extend tests and convert to closure tests
+	t.Run("passes trough an error from dummyJsonRepo", run(
+		Test{
+			mockedJsonRepoError: errors.New("this is an error"),
+			expectedError:       errors.New("this is an error"),
+		},
+	))
 }

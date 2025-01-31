@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/pietdevries94/Kabisa/models"
@@ -37,17 +39,25 @@ func (repo *dummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
 	resp, err := repo.httpClient.Get("https://dummyjson.com/quotes/random")
 	if err != nil {
 		repo.logger.Error().Err(err).Msg("unexpected error when retrieving random quote from api")
-		return nil, err
+		return nil, errors.Join(errors.New("unexpected error when retrieving random quote from api"), err)
+	}
+
+	if resp.Body == nil {
+		repo.logger.Error().Err(err).Int("status code", resp.StatusCode).Msg("no body received")
+		return nil, errors.New("no body received")
 	}
 	defer resp.Body.Close()
 
-	// TODO: status check
+	if resp.StatusCode != http.StatusOK {
+		repo.logger.Error().Int("status code", resp.StatusCode).Msg("unexpected status code received")
+		return nil, fmt.Errorf("unexpected status code received: %d", resp.StatusCode)
+	}
 
 	var quote *models.Quote
 	err = json.NewDecoder(resp.Body).Decode(&quote)
 	if err != nil {
 		repo.logger.Error().Err(err).Msg("unexpected error when decoding result to models.Quote")
-		return nil, err
+		return nil, errors.Join(errors.New("unexpected error when decoding result to models.Quote"), err)
 	}
 
 	return quote, nil
