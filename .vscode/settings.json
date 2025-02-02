@@ -1,3 +1,14 @@
 {
-  "go.lintTool": "golangci-lint"
+  "go.lintTool": "golangci-lint",
+  "gopls": {
+    "formatting.gofumpt": true,
+    "ui.diagnostic.staticcheck": false,
+    "ui.diagnostic.analyses": {
+      "unusedparams": false,
+      "nilness": false,
+      "copylocks": false,
+      "unusedwrite": false
+    }
+  },
+  "go.formatTool": "gofumpt"
 }

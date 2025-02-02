@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/pietdevries94/Kabisa/api"
 	"github.com/pietdevries94/Kabisa/repositories"
 	"github.com/pietdevries94/Kabisa/services"
 	"github.com/rs/zerolog"
@@ -39,11 +39,15 @@ func main() {
 	// init Application sets services, repositories and their dependencies
 	app := initApplication(logger, config)
 
-	r := chi.NewRouter()
-	r.Get("/quote", app.GetQuoteHandler)
+	srv, err := api.NewServer(app)
+	if err != nil {
+		logger.Fatal().
+			Err(err).
+			Msg("failed to setup ogen api")
+	}
 
 	logger.Info().Str("address", config.listenAddress).Msg("starting server")
-	err := http.ListenAndServe(config.listenAddress, r)
+	err = http.ListenAndServe(config.listenAddress, srv)
 	if err != nil {
 		logger.Fatal().
 			Err(err).

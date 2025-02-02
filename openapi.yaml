@@ -2,6 +2,8 @@ info:
   title: An api to retrieve quotes
   version: 0.0.0
   description: This api is part of the coding assignment given to Piet de Vries
+servers:
+  - url: http://127.0.0.1:3333
 paths:
   /quote:
     get:

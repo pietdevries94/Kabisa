@@ -1,16 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/pietdevries94/Kabisa/api"
 	"github.com/pietdevries94/Kabisa/models"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type MockedQuoteService struct {
@@ -23,12 +24,11 @@ func (m *MockedQuoteService) GetRandomQuote() (*models.Quote, error) {
 	return args.Get(0).(*models.Quote), args.Error(1)
 }
 
-func TestApplicationGetQuoteHandler(t *testing.T) {
+func TestGetRandomQuote(t *testing.T) {
 	type Test struct {
 		mockedServiceQuote *models.Quote
 		mockedServiceError error
-		expectedStatusCode int
-		expectedBody       string
+		expectedResult     api.GetRandomQuoteRes
 	}
 
 	run := func(tt Test) func(t *testing.T) {
@@ -45,25 +45,10 @@ func TestApplicationGetQuoteHandler(t *testing.T) {
 				quoteService: mockedQuoteService,
 			}
 
-			// We build a request and pass it trough the handler using a recorder
-			req, err := http.NewRequest("GET", "/quote", http.NoBody)
-			if err != nil {
-				t.Fatal(err)
-			}
-			rr := httptest.NewRecorder()
-			http.HandlerFunc(app.GetQuoteHandler).ServeHTTP(rr, req)
-
-			assrt := assert.New(t) // we rename this because we want to prevent shadowing
-
-			assrt.Equal(tt.expectedStatusCode, rr.Code)
-			assrt.Equal(tt.expectedBody, rr.Body.String())
-
-			// We only expect the content type to be set if there is actual content
-			var expectedContentType = "application/json"
-			if rr.Body.String() == "" {
-				expectedContentType = ""
-			}
-			assrt.Equal(expectedContentType, rr.Result().Header.Get("Content-Type"))
+			// We now run the handler and validate the result
+			res, err := app.GetRandomQuote(context.TODO())
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedResult, res)
 		}
 	}
 
@@ -73,12 +58,17 @@ func TestApplicationGetQuoteHandler(t *testing.T) {
 			Quote:  "Everything Has Its Limit - Iron Ore Cannot Be Educated Into Gold.",
 			Author: "Mark Twain",
 		},
-		expectedBody:       `{"id":1207,"quote":"Everything Has Its Limit - Iron Ore Cannot Be Educated Into Gold.","author":"Mark Twain"}` + "\n",
-		expectedStatusCode: http.StatusOK,
+		expectedResult: &api.Quote{
+			ID:     1207,
+			Quote:  "Everything Has Its Limit - Iron Ore Cannot Be Educated Into Gold.",
+			Author: "Mark Twain",
+		},
 	}))
 
 	t.Run("returns a server error when something went wrong", run(Test{
 		mockedServiceError: errors.New("something went wrong"),
-		expectedStatusCode: http.StatusInternalServerError,
+		expectedResult: &api.InternalServerErrror{
+			Message: "unknown error",
+		},
 	}))
 }

@@ -3,7 +3,6 @@ module github.com/pietdevries94/Kabisa
 go 1.23.5
 
 require (
-	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.1.0
 	github.com/golangci/golangci-lint v1.63.4
