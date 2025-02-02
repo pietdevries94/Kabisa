@@ -15,6 +15,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/ogen-go/ogen/conv"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/otelogen"
 	"github.com/ogen-go/ogen/uri"
@@ -40,6 +41,13 @@ type Invoker interface {
 	//
 	// GET /quote
 	GetRandomQuote(ctx context.Context) (GetRandomQuoteRes, error)
+	// SubmitAnswerForQuoteGame invokes submitAnswerForQuoteGame operation.
+	//
+	// This request expects an answer from the user and will return if the answer was correct and what
+	// the correct answer should be.
+	//
+	// POST /quote-game/{id}/answer
+	SubmitAnswerForQuoteGame(ctx context.Context, request []QuoteGameAnswer, params SubmitAnswerForQuoteGameParams) (SubmitAnswerForQuoteGameRes, error)
 }
 
 // Client implements OAS client.
@@ -223,6 +231,104 @@ func (c *Client) sendGetRandomQuote(ctx context.Context) (res GetRandomQuoteRes,
 
 	stage = "DecodeResponse"
 	result, err := decodeGetRandomQuoteResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// SubmitAnswerForQuoteGame invokes submitAnswerForQuoteGame operation.
+//
+// This request expects an answer from the user and will return if the answer was correct and what
+// the correct answer should be.
+//
+// POST /quote-game/{id}/answer
+func (c *Client) SubmitAnswerForQuoteGame(ctx context.Context, request []QuoteGameAnswer, params SubmitAnswerForQuoteGameParams) (SubmitAnswerForQuoteGameRes, error) {
+	res, err := c.sendSubmitAnswerForQuoteGame(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendSubmitAnswerForQuoteGame(ctx context.Context, request []QuoteGameAnswer, params SubmitAnswerForQuoteGameParams) (res SubmitAnswerForQuoteGameRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("submitAnswerForQuoteGame"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.HTTPRouteKey.String("/quote-game/{id}/answer"),
+	}
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, SubmitAnswerForQuoteGameOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/quote-game/"
+	{
+		// Encode "id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			if unwrapped := string(params.ID); true {
+				return e.EncodeValue(conv.StringToString(unwrapped))
+			}
+			return nil
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/answer"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeSubmitAnswerForQuoteGameRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeSubmitAnswerForQuoteGameResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

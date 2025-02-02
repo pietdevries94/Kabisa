@@ -8,3 +8,7 @@ type CreateNewQuoteGameRes interface {
 type GetRandomQuoteRes interface {
 	getRandomQuoteRes()
 }
+
+type SubmitAnswerForQuoteGameRes interface {
+	submitAnswerForQuoteGameRes()
+}

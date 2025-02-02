@@ -57,7 +57,7 @@ func TestApplication_GetRandomQuote(t *testing.T) {
 
 	t.Run("returns a server error when something went wrong", run(Test{
 		mockedServiceError: errors.New("something went wrong"),
-		expectedResult: &openapi.InternalServerErrror{
+		expectedResult: &openapi.R500{
 			Message: "unknown error",
 		},
 	}))
@@ -140,8 +140,10 @@ func TestApplication_CreateQuoteGame(t *testing.T) {
 
 	t.Run("returns a server error when something went wrong", run(Test{
 		mockedServiceError: errors.New("something went wrong"),
-		expectedResult: &openapi.InternalServerErrror{
+		expectedResult: &openapi.R500{
 			Message: "unknown error",
 		},
 	}))
 }
+
+// TODO: unit tests for SubmitAnswerToQuoteGame

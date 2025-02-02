@@ -20,7 +20,7 @@ paths:
             The request was successful, and the server has returned the
             requested resource in the response body.
         "500":
-          $ref: "#/components/responses/InternalServerErrror"
+          $ref: "#/components/responses/500"
       parameters: []
       description: Returns a random quote
       operationId: getRandomQuote
@@ -72,13 +72,53 @@ paths:
                       - A different name
           description: Game is succesfully started
         "500":
-          $ref: "#/components/responses/InternalServerErrror"
+          $ref: "#/components/responses/500"
       parameters: []
       description:
         The quote game returns three quotes and three authors. In `PUT
         /quote-game/:id`, the player can respond with their answer. There is a
         deadline of one minute
       operationId: createNewQuoteGame
+  /quote-game/{id}/answer:
+    post:
+      tags:
+        - quote
+      summary: Submit answer for quote game
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteGameResult"
+          description: The answer is submitted and the result returned
+        "404":
+          $ref: "#/components/responses/404"
+        "422":
+          $ref: "#/components/responses/422"
+        "500":
+          $ref: "#/components/responses/500"
+      parameters:
+        - $ref: "#/components/parameters/id"
+      description:
+        This request expects an answer from the user and will return if the
+        answer was correct and what the correct answer should be.
+      operationId: submitAnswerForQuoteGame
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/QuoteGameAnswer"
+            example:
+              - id: 7
+                author: A person
+              - id: 8
+                author: A person
+              - id: 9
+                author: A person
+        required: true
+        description: A slice of objects which is the answer to the quote game
 openapi: 3.1.0
 servers:
   - url: http://127.0.0.1:3333
@@ -104,7 +144,7 @@ components:
         - id
       properties:
         id:
-          type: number
+          type: integer
           example: 7
         quote:
           type: string
@@ -113,6 +153,75 @@ components:
           type: string
           example: A name
       description: A basic quote
+    QuoteGameAnswer:
+      type: object
+      example:
+        id: 1
+        author: A name
+      required:
+        - id
+        - author
+      properties:
+        id:
+          type: integer
+          example: 1
+        author:
+          type: string
+          example: A name
+      description: An answer to the quote game
+    QuoteGameResult:
+      type: object
+      example:
+        id: 8b95a776-6da9-4080-8ba5-a3577f399906
+        answers:
+          - id: 7
+            correct: false
+            actual_author: A person
+          - id: 8
+            correct: false
+            actual_author: A person
+          - id: 9
+            correct: false
+            actual_author: A person
+      required:
+        - id
+        - answers
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        answers:
+          type: array
+          items:
+            type: object
+            example:
+              id: 7
+              correct: false
+              actual_author: A person
+            required:
+              - correct
+              - id
+              - actual_author
+            properties:
+              id:
+                type: integer
+                example: 1
+              correct:
+                type: boolean
+                example: true
+              actual_author:
+                type: string
+                example: A name
+          example:
+            - id: 7
+              correct: false
+              actual_author: A person
+            - id: 8
+              correct: false
+              actual_author: A person
+            - id: 9
+              correct: false
+              actual_author: A person
+      description: The result of a quote game
     QuoteWithoutAuthor:
       type: object
       example:
@@ -123,14 +232,30 @@ components:
         - id
       properties:
         id:
-          type: number
+          type: integer
           example: 7
         quote:
           type: string
           example: A quote
       description: QuoteWithoutAuthor is used by the quote game
   responses:
-    InternalServerErrror:
+    404:
+      content:
+        application/json:
+          schema:
+            type: object
+            example:
+              message: not_found
+            required:
+              - message
+            properties:
+              message:
+                type: string
+                example: not_found
+      description:
+        The server cannot find the requested resource. The endpoint may be
+        invalid or the resource may no longer exist.
+    500:
       content:
         application/json:
           schema:
@@ -147,3 +272,52 @@ components:
         The server encountered an unexpected condition that prevented it
         from fulfilling the request. Report the issue to the support team if it
         persists.
+    422:
+      content:
+        application/json:
+          schema:
+            type: object
+            example:
+              errors:
+                - field: id
+                  message: invalid_id
+              message: invalid_request
+            required:
+              - message
+              - errors
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  example:
+                    field: id
+                    message: invalid_id
+                  required:
+                    - field
+                    - message
+                  properties:
+                    field:
+                      type: string
+                      example: id
+                    message:
+                      type: string
+                      example: invalid id
+                example:
+                  - field: id
+                    message: invalid_id
+                  - field: author
+                    message: invalid_author
+              message:
+                type: string
+                example: invalid id
+      description: The request was well-formed but could not be processed due to
+        semantic errors. Correct the data and try again.
+  parameters:
+    id:
+      in: path
+      name: id
+      schema:
+        $ref: "#/components/schemas/UUID"
+      required: true
+      description: the id of the quote game

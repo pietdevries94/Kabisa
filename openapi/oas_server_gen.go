@@ -21,6 +21,13 @@ type Handler interface {
 	//
 	// GET /quote
 	GetRandomQuote(ctx context.Context) (GetRandomQuoteRes, error)
+	// SubmitAnswerForQuoteGame implements submitAnswerForQuoteGame operation.
+	//
+	// This request expects an answer from the user and will return if the answer was correct and what
+	// the correct answer should be.
+	//
+	// POST /quote-game/{id}/answer
+	SubmitAnswerForQuoteGame(ctx context.Context, req []QuoteGameAnswer, params SubmitAnswerForQuoteGameParams) (SubmitAnswerForQuoteGameRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

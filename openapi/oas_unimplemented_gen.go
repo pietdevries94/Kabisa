@@ -31,3 +31,13 @@ func (UnimplementedHandler) CreateNewQuoteGame(ctx context.Context) (r CreateNew
 func (UnimplementedHandler) GetRandomQuote(ctx context.Context) (r GetRandomQuoteRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// SubmitAnswerForQuoteGame implements submitAnswerForQuoteGame operation.
+//
+// This request expects an answer from the user and will return if the answer was correct and what
+// the correct answer should be.
+//
+// POST /quote-game/{id}/answer
+func (UnimplementedHandler) SubmitAnswerForQuoteGame(ctx context.Context, req []QuoteGameAnswer, params SubmitAnswerForQuoteGameParams) (r SubmitAnswerForQuoteGameRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

@@ -61,8 +61,6 @@ github.com/OpenPeeDeeP/depguard/v2 v2.2.0 h1:vDfG60vDtIuf0MEOhmLlLLSzqaRM8EMcgJP
 github.com/OpenPeeDeeP/depguard/v2 v2.2.0/go.mod h1:CIzddKRvLBC4Au5aYP/i3nyaWQ+ClszLIuVocRiCYFQ=
 github.com/aarondl/json v0.0.0-20221020222930-8b0db17ef1bf h1:+edM69bH/X6JpYPmJYBRLanAMe1V5yRXYU3hHUovGcE=
 github.com/aarondl/json v0.0.0-20221020222930-8b0db17ef1bf/go.mod h1:FZqLhJSj2tg0ZN48GB1zvj00+ZYcHPqgsC7yzcgCq6k=
-github.com/aarondl/opt v0.0.0-20230114172057-b91f370c41f0 h1:vLrhbOWVPxtHao/QthU8pcpI4DbtSGnWgH7qIJf8F6k=
-github.com/aarondl/opt v0.0.0-20230114172057-b91f370c41f0/go.mod h1:l4/5NZtYd/SIohsFhaJQQe+sPOTG22furpZ5FvcYOzk=
 github.com/aarondl/opt v0.0.0-20240623220848-083f18ab9536 h1:vhpjulzH5Tr4S3uJ3Y/9pNL481kPq5ERj13ceAW0/uE=
 github.com/aarondl/opt v0.0.0-20240623220848-083f18ab9536/go.mod h1:l4/5NZtYd/SIohsFhaJQQe+sPOTG22furpZ5FvcYOzk=
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=

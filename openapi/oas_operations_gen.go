@@ -6,6 +6,7 @@ package openapi
 type OperationName = string
 
 const (
-	CreateNewQuoteGameOperation OperationName = "CreateNewQuoteGame"
-	GetRandomQuoteOperation     OperationName = "GetRandomQuote"
+	CreateNewQuoteGameOperation       OperationName = "CreateNewQuoteGame"
+	GetRandomQuoteOperation           OperationName = "GetRandomQuote"
+	SubmitAnswerForQuoteGameOperation OperationName = "SubmitAnswerForQuoteGame"
 )

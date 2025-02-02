@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/pietdevries94/Kabisa/models"
 	"github.com/rs/zerolog"
 )
@@ -39,4 +40,11 @@ func (service *QuoteService) CreateQuoteGame(ctx context.Context) (*models.Quote
 		return nil, err
 	}
 	return service.quoteGameRepo.CreateQuoteGame(ctx, quotes)
+}
+
+func (service *QuoteService) SubmitAnswerToQuoteGame(ctx context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
+	_ = ctx
+	_ = id
+	_ = answers
+	panic("// TODO: implement")
 }

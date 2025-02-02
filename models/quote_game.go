@@ -7,3 +7,15 @@ type QuoteGame struct {
 	Quotes  []*QuoteWithoutAuthor
 	Authors []string
 }
+
+type QuoteGameAnswerMap map[int]string
+
+type QuoteGameResult struct {
+	ID      uuid.UUID
+	Answers []*QuoteGameActualAnswer
+}
+
+type QuoteGameActualAnswer struct {
+	Quote
+	Correct bool
+}

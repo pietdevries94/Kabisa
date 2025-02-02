@@ -3,8 +3,6 @@
 package openapi
 
 import (
-	"fmt"
-
 	"github.com/go-faster/errors"
 
 	"github.com/ogen-go/ogen/validate"
@@ -31,23 +29,6 @@ func (s *CreateNewQuoteGameOK) Validate() error {
 		if s.Quotes == nil {
 			return errors.New("nil is invalid value")
 		}
-		var failures []validate.FieldError
-		for i, elem := range s.Quotes {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
@@ -72,20 +53,31 @@ func (s *CreateNewQuoteGameOK) Validate() error {
 	return nil
 }
 
-func (s *Quote) Validate() error {
+func (s *QuoteGameResult) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.ID)); err != nil {
-			return errors.Wrap(err, "float")
+		if err := s.ID.Validate(); err != nil {
+			return err
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "id",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if s.Answers == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "answers",
 			Error: err,
 		})
 	}
@@ -95,20 +87,20 @@ func (s *Quote) Validate() error {
 	return nil
 }
 
-func (s *QuoteWithoutAuthor) Validate() error {
+func (s *R422) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.ID)); err != nil {
-			return errors.Wrap(err, "float")
+		if s.Errors == nil {
+			return errors.New("nil is invalid value")
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "id",
+			Name:  "errors",
 			Error: err,
 		})
 	}
