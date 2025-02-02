@@ -15,3 +15,8 @@ func NewPublicError(msg string) *PublicError {
 		msg: msg,
 	}
 }
+
+var (
+	ErrQuoteGameIdNotFound = NewPublicError("quote_game_id_not_found")
+	ErrInvalidQuoteID      = NewPublicError("invalid_quote_id")
+)

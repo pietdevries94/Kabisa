@@ -261,13 +261,13 @@ components:
           schema:
             type: object
             example:
-              message: unknown error
+              message: unknown_error
             required:
               - message
             properties:
               message:
                 type: string
-                example: unknown error
+                example: unknown_error
       description:
         The server encountered an unexpected condition that prevented it
         from fulfilling the request. Report the issue to the support team if it

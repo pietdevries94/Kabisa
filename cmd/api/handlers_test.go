@@ -58,7 +58,7 @@ func TestApplication_GetRandomQuote(t *testing.T) {
 	t.Run("returns a server error when something went wrong", run(Test{
 		mockedServiceError: errors.New("something went wrong"),
 		expectedResult: &openapi.R500{
-			Message: "unknown error",
+			Message: "unknown_error",
 		},
 	}))
 }
@@ -141,9 +141,152 @@ func TestApplication_CreateQuoteGame(t *testing.T) {
 	t.Run("returns a server error when something went wrong", run(Test{
 		mockedServiceError: errors.New("something went wrong"),
 		expectedResult: &openapi.R500{
-			Message: "unknown error",
+			Message: "unknown_error",
 		},
 	}))
 }
 
-// TODO: unit tests for SubmitAnswerToQuoteGame
+func TestApplication_SubmitAnswerForQuoteGame(t *testing.T) {
+	type Test struct {
+		answers                           []openapi.QuoteGameAnswer
+		params                            openapi.SubmitAnswerForQuoteGameParams
+		expectedMockedServiceInputID      uuid.UUID
+		expectedMockedServiceInputAnswers models.QuoteGameAnswerMap
+		mockedServiceResult               *models.QuoteGameResult
+		mockedServiceError                error
+		expectedResult                    openapi.SubmitAnswerForQuoteGameRes
+	}
+
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
+
+			// first we bootstrap a minimal version of the application, needed for the handler
+			mockedQuoteService := new(MockedQuoteService)
+			mockedQuoteService.On("SubmitAnswerToQuoteGame", tt.expectedMockedServiceInputID, tt.expectedMockedServiceInputAnswers).
+				Once().
+				Return(tt.mockedServiceResult, tt.mockedServiceError)
+
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			app := application{
+				logger:       &logger,
+				quoteService: mockedQuoteService,
+			}
+
+			// We now run the handler and validate the result
+			res, err := app.SubmitAnswerForQuoteGame(context.TODO(), tt.answers, tt.params)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedResult, res)
+		}
+	}
+
+	t.Run("returns a quote game", run(Test{
+		answers: []openapi.QuoteGameAnswer{
+			{ID: 54, Author: "A name"},
+			{ID: 43, Author: "A different name"},
+			{ID: 2, Author: "Bob"},
+		},
+		params: openapi.SubmitAnswerForQuoteGameParams{
+			ID: "03f17f15-5d0a-49ea-aa05-039f2f18373e",
+		},
+		expectedMockedServiceInputID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		expectedMockedServiceInputAnswers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedServiceResult: &models.QuoteGameResult{
+			ID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			Answers: []*models.QuoteGameActualAnswer{
+				{Quote: models.Quote{ID: 54, Author: "George", Quote: "Hello!"}, Correct: false},
+				{Quote: models.Quote{ID: 43, Author: "William", Quote: "Hi!"}, Correct: false},
+				{Quote: models.Quote{ID: 2, Author: "Bob", Quote: "Bye!"}, Correct: true},
+			},
+		},
+		expectedResult: &openapi.QuoteGameResult{
+			ID: "03f17f15-5d0a-49ea-aa05-039f2f18373e",
+			Answers: []openapi.QuoteGameResultAnswersItem{
+				{ID: 54, Correct: false, ActualAuthor: "George"},
+				{ID: 43, Correct: false, ActualAuthor: "William"},
+				{ID: 2, Correct: true, ActualAuthor: "Bob"},
+			},
+		},
+	}))
+
+	t.Run("returns an 500 if the service errors without a public error", run(Test{
+		answers: []openapi.QuoteGameAnswer{
+			{ID: 54, Author: "A name"},
+			{ID: 43, Author: "A different name"},
+			{ID: 2, Author: "Bob"},
+		},
+		params: openapi.SubmitAnswerForQuoteGameParams{
+			ID: "03f17f15-5d0a-49ea-aa05-039f2f18373e",
+		},
+		expectedMockedServiceInputID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		expectedMockedServiceInputAnswers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedServiceError: errors.New("a crazy error"),
+		expectedResult: &openapi.R500{
+			Message: "unknown_error",
+		},
+	}))
+
+	t.Run("returns a 404 if the id is not parseable as a uuid v4", run(Test{
+		answers: []openapi.QuoteGameAnswer{
+			{ID: 54, Author: "A name"},
+			{ID: 43, Author: "A different name"},
+			{ID: 2, Author: "Bob"},
+		},
+		params: openapi.SubmitAnswerForQuoteGameParams{
+			ID: "nope",
+		},
+		expectedResult: &openapi.R404{
+			Message: "not_found",
+		},
+	}))
+
+	t.Run("returns a 404 if the error returned by the service is a quote_game_id_not_found error", run(Test{
+		answers: []openapi.QuoteGameAnswer{
+			{ID: 54, Author: "A name"},
+			{ID: 43, Author: "A different name"},
+			{ID: 2, Author: "Bob"},
+		},
+		params: openapi.SubmitAnswerForQuoteGameParams{
+			ID: "03f17f15-5d0a-49ea-aa05-039f2f18373e",
+		},
+		expectedMockedServiceInputID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		expectedMockedServiceInputAnswers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedServiceError: models.ErrQuoteGameIdNotFound,
+		expectedResult: &openapi.R404{
+			Message: "not_found",
+		},
+	}))
+
+	t.Run("returns a 422 if any other public error is given", run(Test{
+		answers: []openapi.QuoteGameAnswer{
+			{ID: 54, Author: "A name"},
+			{ID: 43, Author: "A different name"},
+			{ID: 2, Author: "Bob"},
+		},
+		params: openapi.SubmitAnswerForQuoteGameParams{
+			ID: "03f17f15-5d0a-49ea-aa05-039f2f18373e",
+		},
+		expectedMockedServiceInputID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		expectedMockedServiceInputAnswers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedServiceError: models.ErrInvalidQuoteID,
+		expectedResult: &openapi.R422{
+			Message: "invalid_quote_id",
+		},
+	}))
+}

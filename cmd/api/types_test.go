@@ -26,6 +26,6 @@ func (m *MockedQuoteService) CreateQuoteGame(_ context.Context) (*models.QuoteGa
 
 // SubmitAnswerToQuoteGame is fully mocked here
 func (m *MockedQuoteService) SubmitAnswerToQuoteGame(_ context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
-	args := m.Called(answers)
+	args := m.Called(id, answers)
 	return args.Get(0).(*models.QuoteGameResult), args.Error(1)
 }

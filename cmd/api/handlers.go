@@ -57,6 +57,9 @@ func (app *application) SubmitAnswerForQuoteGame(ctx context.Context, answers []
 	}
 
 	gameResult, err := app.quoteService.SubmitAnswerToQuoteGame(ctx, id, answerMap)
+	if err == models.ErrQuoteGameIdNotFound {
+		return app.notFound()
+	}
 	if err != nil {
 		return app.unprocessableContent(err)
 	}
@@ -88,7 +91,7 @@ func (app *application) unprocessableContent(err error) (openapi.SubmitAnswerFor
 
 func (app *application) internalServerError() (*openapi.R500, error) {
 	return &openapi.R500{
-		Message: "unknown error",
+		Message: "unknown_error",
 	}, nil
 }
 
