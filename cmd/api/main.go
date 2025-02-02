@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pietdevries94/Kabisa/database"
 	"github.com/pietdevries94/Kabisa/openapi"
 	"github.com/pietdevries94/Kabisa/repositories"
 	"github.com/pietdevries94/Kabisa/services"
@@ -24,6 +25,8 @@ type config struct {
 	logLevel string
 	// The path to the log file. If this is not set, the application will only log to console
 	logFilePath string
+	// The connection string for sqlite
+	sqliteDSN string
 }
 
 // application contains setup services, directly needed by it's httpHandler methods
@@ -67,6 +70,7 @@ func initConfig() *config {
 		httpClientTimeout: "10",
 		logLevel:          "info",
 		logFilePath:       "",
+		sqliteDSN:         "file::memory:?cache=shared",
 	}
 
 	// Next, we manually lookup the environment variables
@@ -80,6 +84,9 @@ func initConfig() *config {
 		conf.logLevel = val
 	}
 	if val, found := os.LookupEnv("KABISAQUOTE_LOG_FILE_PATH"); found {
+		conf.logFilePath = val
+	}
+	if val, found := os.LookupEnv("KABISAQUOTE_SQLITE_DSN"); found {
 		conf.logFilePath = val
 	}
 
@@ -128,10 +135,11 @@ func initLogger(conf *config) *zerolog.Logger {
 // initApplication sets up the services, repositories and their dependencies
 // It returns a struct which contains the logger and services to be used by it's httpHandler methods
 func initApplication(logger *zerolog.Logger, conf *config) *application {
+	db := database.Init(logger, conf.sqliteDSN)
 	httpClient := initHttpClient(logger, conf)
 
 	dummyJsonRepo := repositories.NewDummyJsonRepo(logger, httpClient)
-	quoteGameRepo := repositories.NewQuoteGameRepo(logger)
+	quoteGameRepo := repositories.NewQuoteGameRepo(logger, db)
 	quoteService := services.NewQuoteService(logger, dummyJsonRepo, quoteGameRepo)
 
 	return &application{

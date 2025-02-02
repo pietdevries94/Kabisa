@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,7 +25,7 @@ func NewDummyJsonRepo(logger *zerolog.Logger, httpClient httpClient) *DummyJsonR
 }
 
 // GetRandomQuote retrieves a quote using the random feature of dummyjson
-func (repo *DummyJsonRepo) GetRandomQuotes(amount int) ([]*models.Quote, error) {
+func (repo *DummyJsonRepo) GetRandomQuotes(_ context.Context, amount int) ([]*models.Quote, error) {
 	if amount < 1 || amount > 10 {
 		// The api only accepts 1 to 10
 		return nil, fmt.Errorf("amount should be between 1 and 10. Given: %d", amount)
@@ -32,6 +33,7 @@ func (repo *DummyJsonRepo) GetRandomQuotes(amount int) ([]*models.Quote, error) 
 
 	url := fmt.Sprintf("https://dummyjson.com/quotes/random/%d", amount)
 
+	// TODO use the request
 	resp, err := repo.httpClient.Get(url)
 	if err != nil {
 		repo.logger.Error().Err(err).Msg("unexpected error when retrieving random quote from api")

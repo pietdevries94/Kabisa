@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -30,7 +31,7 @@ func TestQuoteService_GetRandomQuote(t *testing.T) {
 
 			// We inject the mocked repo into the service and expect the same quote back
 			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
-			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, nil).GetRandomQuote()
+			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, nil).GetRandomQuote(context.TODO())
 
 			if tt.expectedError != nil {
 				require.ErrorContains(t, err, tt.expectedError.Error())
@@ -97,7 +98,7 @@ func TestQuoteService_CreateQuoteGame(t *testing.T) {
 
 			// We inject the mocked repos into the service and expect the same quote back
 			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
-			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, mockedQuoteGameRepo).CreateQuoteGame()
+			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, mockedQuoteGameRepo).CreateQuoteGame(context.TODO())
 
 			if tt.expectedError != nil {
 				require.ErrorContains(t, err, tt.expectedError.Error())

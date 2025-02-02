@@ -1,8 +1,12 @@
 package main
 
-import "github.com/pietdevries94/Kabisa/models"
+import (
+	"context"
+
+	"github.com/pietdevries94/Kabisa/models"
+)
 
 type quoteService interface {
-	GetRandomQuote() (*models.Quote, error)
-	CreateQuoteGame() (*models.QuoteGame, error)
+	GetRandomQuote(ctx context.Context) (*models.Quote, error)
+	CreateQuoteGame(ctx context.Context) (*models.QuoteGame, error)
 }

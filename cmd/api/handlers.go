@@ -2,31 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/pietdevries94/Kabisa/openapi"
 )
 
-func (app *application) GetQuoteHandler(w http.ResponseWriter, _ *http.Request) {
-	quote, err := app.quoteService.GetRandomQuote()
-	if err != nil {
-		app.logger.Error().Err(err).Msg("unexpected error when calling quoteService.GetRandomQuote")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(quote)
-	if err != nil {
-		app.logger.Error().Err(err).Msg("unexpected error when encoding quote handler to json")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (app *application) GetRandomQuote(_ context.Context) (openapi.GetRandomQuoteRes, error) {
-	quote, err := app.quoteService.GetRandomQuote()
+func (app *application) GetRandomQuote(ctx context.Context) (openapi.GetRandomQuoteRes, error) {
+	quote, err := app.quoteService.GetRandomQuote(ctx)
 	if err != nil {
 		app.logger.Error().Err(err).Msg("unexpected error when calling quoteService.GetRandomQuote")
 		return app.internalServerError()
@@ -40,8 +21,8 @@ func (app *application) GetRandomQuote(_ context.Context) (openapi.GetRandomQuot
 	return result, nil
 }
 
-func (app *application) CreateNewQuoteGame(_ context.Context) (openapi.CreateNewQuoteGameRes, error) {
-	game, err := app.quoteService.CreateQuoteGame()
+func (app *application) CreateNewQuoteGame(ctx context.Context) (openapi.CreateNewQuoteGameRes, error) {
+	game, err := app.quoteService.CreateQuoteGame(ctx)
 	if err != nil {
 		app.logger.Error().Err(err).Msg("unexpected error when calling quoteService.CreateQuoteGame")
 		return app.internalServerError()

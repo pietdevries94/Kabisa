@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -38,7 +39,7 @@ func TestDummyJsonRepo_GetRandomQuotes(t *testing.T) {
 
 			// We inject the mocked repo and expect to get the same quote back, but now as a struct
 			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
-			res, err := NewDummyJsonRepo(&logger, mockedHttpClient).GetRandomQuotes(tt.amount)
+			res, err := NewDummyJsonRepo(&logger, mockedHttpClient).GetRandomQuotes(context.TODO(), tt.amount)
 
 			if tt.expectedError != nil {
 				require.ErrorContains(t, err, tt.expectedError.Error())
