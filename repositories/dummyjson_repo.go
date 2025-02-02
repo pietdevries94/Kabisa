@@ -25,7 +25,7 @@ func NewDummyJsonRepo(logger *zerolog.Logger, httpClient httpClient) *DummyJsonR
 }
 
 // GetRandomQuote retrieves a quote using the random feature of dummyjson
-func (repo *DummyJsonRepo) GetRandomQuotes(_ context.Context, amount int) ([]*models.Quote, error) {
+func (repo *DummyJsonRepo) GetRandomQuotes(ctx context.Context, amount int) ([]*models.Quote, error) {
 	if amount < 1 || amount > 10 {
 		// The api only accepts 1 to 10
 		return nil, fmt.Errorf("amount should be between 1 and 10. Given: %d", amount)
@@ -33,8 +33,13 @@ func (repo *DummyJsonRepo) GetRandomQuotes(_ context.Context, amount int) ([]*mo
 
 	url := fmt.Sprintf("https://dummyjson.com/quotes/random/%d", amount)
 
-	// TODO use the request
-	resp, err := repo.httpClient.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	if err != nil {
+		repo.logger.Error().Err(err).Msg("unexpected error when creating request for retrieving random quote from api")
+		return nil, errors.Join(errors.New("unexpected error when creating request for retrieving random quote from api"), err)
+	}
+
+	resp, err := repo.httpClient.Do(req)
 	if err != nil {
 		repo.logger.Error().Err(err).Msg("unexpected error when retrieving random quote from api")
 		return nil, errors.Join(errors.New("unexpected error when retrieving random quote from api"), err)

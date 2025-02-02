@@ -11,8 +11,10 @@ type MockedHttpClient struct {
 	mock.Mock
 }
 
-// Get is fully mocked here
-func (m *MockedHttpClient) Get(url string) (resp *http.Response, err error) {
+// Get is mocked here. Because it is rather annoying to check the full request that is passed to the mock,
+// We use the url to match it.
+func (m *MockedHttpClient) Do(req *http.Request) (resp *http.Response, err error) {
+	url := req.URL.String()
 	args := m.Called(url)
 	return args.Get(0).(*http.Response), args.Error(1)
 }

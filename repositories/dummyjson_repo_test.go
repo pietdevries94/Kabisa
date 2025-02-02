@@ -33,7 +33,7 @@ func TestDummyJsonRepo_GetRandomQuotes(t *testing.T) {
 
 			// The body is a copy of an actual response from the api
 			url := fmt.Sprintf("https://dummyjson.com/quotes/random/%d", tt.amount)
-			mockedHttpClient.On("Get", url).
+			mockedHttpClient.On("Do", url).
 				Once().
 				Return(tt.mockedResponse, tt.mockedError)
 
@@ -50,9 +50,9 @@ func TestDummyJsonRepo_GetRandomQuotes(t *testing.T) {
 			assert.Equal(t, tt.expectedResult, res)
 
 			if tt.expectedApiToBeCalled {
-				mockedHttpClient.AssertCalled(t, "Get", url)
+				mockedHttpClient.AssertCalled(t, "Do", url)
 			} else {
-				mockedHttpClient.AssertNotCalled(t, "Get", url)
+				mockedHttpClient.AssertNotCalled(t, "Do", url)
 			}
 		}
 	}
