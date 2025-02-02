@@ -43,8 +43,15 @@ func (service *QuoteService) CreateQuoteGame(ctx context.Context) (*models.Quote
 }
 
 func (service *QuoteService) SubmitAnswerToQuoteGame(ctx context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
-	_ = ctx
-	_ = id
-	_ = answers
-	panic("// TODO: implement")
+	quoteIDs, err := service.quoteGameRepo.ValidateIDAndAnswerIDs(ctx, id, answers)
+	if err != nil {
+		return nil, err
+	}
+
+	quotes, err := service.dummyJsonRepo.GetQuotes(ctx, quoteIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return service.quoteGameRepo.ValidateAnswersAndCreateGameResult(ctx, id, quotes, answers)
 }

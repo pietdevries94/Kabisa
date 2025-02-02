@@ -65,3 +65,9 @@ func (repo *DummyJsonRepo) GetRandomQuotes(ctx context.Context, amount int) ([]*
 
 	return quotes, nil
 }
+
+func (repo *DummyJsonRepo) GetQuotes(ctx context.Context, ids []int) (map[int]*models.Quote, error) {
+	_ = ctx
+	_ = ids
+	panic("// TODO implement this")
+}

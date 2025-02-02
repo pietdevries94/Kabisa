@@ -81,3 +81,18 @@ func (repo *QuoteGameRepo) CreateQuoteGame(ctx context.Context, quotes []*models
 	// Finally, we return the game
 	return game, nil
 }
+
+func (repo *QuoteGameRepo) ValidateIDAndAnswerIDs(ctx context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (answerIDs []int, err error) {
+	_ = ctx
+	_ = id
+	_ = answers
+	panic("// TODO implement this")
+}
+
+func (repo *QuoteGameRepo) ValidateAnswersAndCreateGameResult(ctx context.Context, id uuid.UUID, quotes map[int]*models.Quote, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
+	_ = ctx
+	_ = id
+	_ = quotes
+	_ = answers
+	panic("// TODO implement this")
+}
