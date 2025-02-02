@@ -2,51 +2,106 @@ info:
   title: An api to retrieve quotes
   version: 0.0.0
   description: This api is part of the coding assignment given to Piet de Vries
-servers:
-  - url: http://127.0.0.1:3333
+tags:
+  - name: quote
 paths:
   /quote:
     get:
-      operationId: getRandomQuote
+      tags:
+        - quote
       summary: Get random quote
       responses:
         "200":
-          description:
-            The request was successful, and the server has returned the
-            requested resource in the response body.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Quote"
+          description:
+            The request was successful, and the server has returned the
+            requested resource in the response body.
         "500":
           $ref: "#/components/responses/InternalServerErrror"
       parameters: []
       description: Returns a random quote
+      operationId: getRandomQuote
+  /quote-game:
+    post:
       tags:
         - quote
-openapi: 3.1.0
-components:
-  responses:
-    InternalServerErrror:
+      summary: Create new quote game
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                title: CreateNewQuoteGameOk
+                example:
+                  id: 8b95a776-6da9-4080-8ba5-a3577f399906
+                  quotes:
+                    - id: 1
+                      quote: a quote
+                    - id: 2
+                      quote: a different quote
+                  authors:
+                    - A name
+                    - A different name
+                required:
+                  - id
+                  - quotes
+                  - authors
+                properties:
+                  id:
+                    $ref: "#/components/schemas/UUID"
+                  quotes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/QuoteWithoutAuthor"
+                    example:
+                      - id: 1
+                        quote: a quote
+                      - id: 2
+                        quote: a different quote
+                  authors:
+                    type: array
+                    items:
+                      type: string
+                      example: A name
+                    example:
+                      - A name
+                      - A different name
+          description: Game is succesfully started
+        "500":
+          $ref: "#/components/responses/InternalServerErrror"
+      parameters: []
       description:
-        The server encountered an unexpected condition that prevented it
-        from fulfilling the request. Report the issue to the support team if it
-        persists.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                example: unknown error
-            required:
-              - message
-            example:
-              message: unknown error
+        The quote game returns three quotes and three authors. In `PUT
+        /quote-game/:id`, the player can respond with their answer. There is a
+        deadline of one minute
+      operationId: createNewQuoteGame
+openapi: 3.1.0
+servers:
+  - url: http://127.0.0.1:3333
+    description: The default endpoint of the service, mainly used in development/testing
+components:
   schemas:
+    UUID:
+      type: string
+      example: 8b95a776-6da9-4080-8ba5-a3577f399906
+      pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+      maxLength: 36
+      minLength: 36
+      description: UUID must be a valid UUIDv4
     Quote:
       type: object
+      example:
+        id: 7
+        quote: A quote
+        author: A name
+      required:
+        - quote
+        - author
+        - id
       properties:
         id:
           type: number
@@ -57,14 +112,38 @@ components:
         author:
           type: string
           example: A name
-      required:
-        - quote
-        - author
-        - id
       description: A basic quote
+    QuoteWithoutAuthor:
+      type: object
       example:
         id: 7
         quote: A quote
-        author: A name
-tags:
-  - name: quote
+      required:
+        - quote
+        - id
+      properties:
+        id:
+          type: number
+          example: 7
+        quote:
+          type: string
+          example: A quote
+      description: QuoteWithoutAuthor is used by the quote game
+  responses:
+    InternalServerErrror:
+      content:
+        application/json:
+          schema:
+            type: object
+            example:
+              message: unknown error
+            required:
+              - message
+            properties:
+              message:
+                type: string
+                example: unknown error
+      description:
+        The server encountered an unexpected condition that prevented it
+        from fulfilling the request. Report the issue to the support team if it
+        persists.

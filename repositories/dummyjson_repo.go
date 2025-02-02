@@ -10,33 +10,29 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// DummyJsonRepo handles all calls to the dummyjson.com api.
-type DummyJsonRepo interface {
-	// GetRandomQuote retrieves a quote using the random feature of dummyjson
-	GetRandomQuote() (*models.Quote, error)
-}
-
-// httpClient is an interface containing all the functions of http.Client that are used by the repositories
-type httpClient interface {
-	Get(url string) (resp *http.Response, err error)
-}
-
-type dummyJsonRepo struct {
+type DummyJsonRepo struct {
 	logger     *zerolog.Logger
 	httpClient httpClient
 }
 
 // NewDummyJsonRepo returns a new DummyJsonRepo, which handles all calls to the dummyjson.com api.
-func NewDummyJsonRepo(logger *zerolog.Logger, httpClient httpClient) DummyJsonRepo {
-	return &dummyJsonRepo{
+func NewDummyJsonRepo(logger *zerolog.Logger, httpClient httpClient) *DummyJsonRepo {
+	return &DummyJsonRepo{
 		logger:     logger,
 		httpClient: httpClient,
 	}
 }
 
 // GetRandomQuote retrieves a quote using the random feature of dummyjson
-func (repo *dummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
-	resp, err := repo.httpClient.Get("https://dummyjson.com/quotes/random")
+func (repo *DummyJsonRepo) GetRandomQuotes(amount int) ([]*models.Quote, error) {
+	if amount < 1 || amount > 10 {
+		// The api only accepts 1 to 10
+		return nil, fmt.Errorf("amount should be between 1 and 10. Given: %d", amount)
+	}
+
+	url := fmt.Sprintf("https://dummyjson.com/quotes/random/%d", amount)
+
+	resp, err := repo.httpClient.Get(url)
 	if err != nil {
 		repo.logger.Error().Err(err).Msg("unexpected error when retrieving random quote from api")
 		return nil, errors.Join(errors.New("unexpected error when retrieving random quote from api"), err)
@@ -53,12 +49,12 @@ func (repo *dummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
 		return nil, fmt.Errorf("unexpected status code received: %d", resp.StatusCode)
 	}
 
-	var quote *models.Quote
-	err = json.NewDecoder(resp.Body).Decode(&quote)
+	var quotes []*models.Quote
+	err = json.NewDecoder(resp.Body).Decode(&quotes)
 	if err != nil {
 		repo.logger.Error().Err(err).Msg("unexpected error when decoding result to models.Quote")
 		return nil, errors.Join(errors.New("unexpected error when decoding result to models.Quote"), err)
 	}
 
-	return quote, nil
+	return quotes, nil
 }

@@ -5,26 +5,16 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/pietdevries94/Kabisa/models"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-type MockedDummyJsonRepo struct {
-	mock.Mock
-}
-
-// Get is fully mocked here, returning with
-func (m *MockedDummyJsonRepo) GetRandomQuote() (*models.Quote, error) {
-	args := m.Called()
-	return args.Get(0).(*models.Quote), args.Error(1)
-}
-
-func TestQuoteServiceGetRandomQuote(t *testing.T) {
+func TestQuoteService_GetRandomQuote(t *testing.T) {
 	type Test struct {
-		mockedJsonRepoQuote *models.Quote
+		mockedJsonRepoQuote []*models.Quote
 		mockedJsonRepoError error
 		expectedResult      *models.Quote
 		expectedError       error
@@ -34,11 +24,13 @@ func TestQuoteServiceGetRandomQuote(t *testing.T) {
 			t.Helper()
 
 			mockedDummyJsonRepo := new(MockedDummyJsonRepo)
-			mockedDummyJsonRepo.On("GetRandomQuote").Once().Return(tt.mockedJsonRepoQuote, tt.mockedJsonRepoError)
+			mockedDummyJsonRepo.On("GetRandomQuotes", 1).
+				Once().
+				Return(tt.mockedJsonRepoQuote, tt.mockedJsonRepoError)
 
 			// We inject the mocked repo into the service and expect the same quote back
 			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
-			res, err := NewQuoteService(&logger, mockedDummyJsonRepo).GetRandomQuote()
+			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, nil).GetRandomQuote()
 
 			if tt.expectedError != nil {
 				require.ErrorContains(t, err, tt.expectedError.Error())
@@ -52,10 +44,12 @@ func TestQuoteServiceGetRandomQuote(t *testing.T) {
 
 	t.Run("returns quote from dummyJsonRepo", run(Test{
 		// The mocked quote is based on an actual response from the underlying api
-		mockedJsonRepoQuote: &models.Quote{
-			ID:     663,
-			Quote:  "Never Mistake Motion For Action.",
-			Author: "Ernest Hemingway",
+		mockedJsonRepoQuote: []*models.Quote{
+			{
+				ID:     663,
+				Quote:  "Never Mistake Motion For Action.",
+				Author: "Ernest Hemingway",
+			},
 		},
 		expectedResult: &models.Quote{
 			ID:     663,
@@ -68,6 +62,146 @@ func TestQuoteServiceGetRandomQuote(t *testing.T) {
 		Test{
 			mockedJsonRepoError: errors.New("this is an error"),
 			expectedError:       errors.New("this is an error"),
+		},
+	))
+
+	t.Run("throws an error if the dummyJsonRepo returns no quotes, nor an error", run(
+		Test{
+			expectedError: errors.New("dummyJsonRepo returned no quotes and no error"),
+		},
+	))
+}
+
+func TestQuoteService_CreateQuoteGame(t *testing.T) {
+	type Test struct {
+		mockedJsonRepoQuote  []*models.Quote
+		mockedJsonRepoError  error
+		mockedQuoteGame      *models.QuoteGame
+		mockedQuoteGameError error
+		expectedResult       *models.QuoteGame
+		expectedError        error
+	}
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
+
+			mockedDummyJsonRepo := new(MockedDummyJsonRepo)
+			mockedDummyJsonRepo.On("GetRandomQuotes", 3).
+				Once().
+				Return(tt.mockedJsonRepoQuote, tt.mockedJsonRepoError)
+
+			mockedQuoteGameRepo := new(MockedQuoteGameRepo)
+			mockedQuoteGameRepo.On("CreateQuoteGame", tt.mockedJsonRepoQuote).
+				Once().
+				Return(tt.mockedQuoteGame, tt.mockedQuoteGameError)
+
+			// We inject the mocked repos into the service and expect the same quote back
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, mockedQuoteGameRepo).CreateQuoteGame()
+
+			if tt.expectedError != nil {
+				require.ErrorContains(t, err, tt.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expectedResult, res)
+		}
+	}
+
+	t.Run("returns quote from dummyJsonRepo", run(Test{
+		// The mocked quote is based on an actual response from the underlying api
+		mockedJsonRepoQuote: []*models.Quote{
+			{
+				ID:     70,
+				Quote:  "The cure for pain is in the pain.",
+				Author: "Rumi",
+			},
+			{
+				ID:     905,
+				Quote:  "Try as much as you can to mention death. For if you were having hard times in your life, then it would give you more hope and would ease things for you. And if you were having abundant affluence of living in luxury, then it would make it less luxurious.",
+				Author: "Umar ibn Al-Khattāb (R.A)",
+			},
+			{
+				ID:     451,
+				Quote:  "We should not give up and we should not allow the problem to defeat us.",
+				Author: "Abdul Kalam",
+			},
+		},
+		mockedQuoteGame: &models.QuoteGame{
+			ID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			Quotes: []*models.QuoteWithoutAuthor{
+				{
+					ID:    70,
+					Quote: "The cure for pain is in the pain.",
+				},
+				{
+					ID:    905,
+					Quote: "Try as much as you can to mention death. For if you were having hard times in your life, then it would give you more hope and would ease things for you. And if you were having abundant affluence of living in luxury, then it would make it less luxurious.",
+				},
+				{
+					ID:    451,
+					Quote: "We should not give up and we should not allow the problem to defeat us.",
+				},
+			},
+			Authors: []string{
+				"Abdul Kalam",
+				"Rumi",
+				"Umar ibn Al-Khattāb (R.A)",
+			},
+		},
+		expectedResult: &models.QuoteGame{
+			ID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			Quotes: []*models.QuoteWithoutAuthor{
+				{
+					ID:    70,
+					Quote: "The cure for pain is in the pain.",
+				},
+				{
+					ID:    905,
+					Quote: "Try as much as you can to mention death. For if you were having hard times in your life, then it would give you more hope and would ease things for you. And if you were having abundant affluence of living in luxury, then it would make it less luxurious.",
+				},
+				{
+					ID:    451,
+					Quote: "We should not give up and we should not allow the problem to defeat us.",
+				},
+			},
+			Authors: []string{
+				"Abdul Kalam",
+				"Rumi",
+				"Umar ibn Al-Khattāb (R.A)",
+			},
+		},
+	}))
+
+	t.Run("passes trough an error from dummyJsonRepo", run(
+		Test{
+			mockedJsonRepoError: errors.New("this is an error"),
+			expectedError:       errors.New("this is an error"),
+		},
+	))
+
+	t.Run("passes trough an error from quoteGameRepo", run(
+		Test{
+			mockedJsonRepoQuote: []*models.Quote{
+				{
+					ID:     70,
+					Quote:  "The cure for pain is in the pain.",
+					Author: "Rumi",
+				},
+				{
+					ID:     905,
+					Quote:  "Try as much as you can to mention death. For if you were having hard times in your life, then it would give you more hope and would ease things for you. And if you were having abundant affluence of living in luxury, then it would make it less luxurious.",
+					Author: "Umar ibn Al-Khattāb (R.A)",
+				},
+				{
+					ID:     451,
+					Quote:  "We should not give up and we should not allow the problem to defeat us.",
+					Author: "Abdul Kalam",
+				},
+			},
+			mockedQuoteGameError: errors.New("this is an error"),
+			expectedError:        errors.New("this is an error"),
 		},
 	))
 }

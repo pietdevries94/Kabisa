@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pietdevries94/Kabisa/api"
+	"github.com/pietdevries94/Kabisa/openapi"
 	"github.com/pietdevries94/Kabisa/repositories"
 	"github.com/pietdevries94/Kabisa/services"
 	"github.com/rs/zerolog"
@@ -29,7 +29,7 @@ type config struct {
 // application contains setup services, directly needed by it's httpHandler methods
 type application struct {
 	logger       *zerolog.Logger
-	quoteService services.QuoteService
+	quoteService quoteService
 }
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 	// init Application sets services, repositories and their dependencies
 	app := initApplication(logger, config)
 
-	srv, err := api.NewServer(app)
+	srv, err := openapi.NewServer(app)
 	if err != nil {
 		logger.Fatal().
 			Err(err).
@@ -131,7 +131,8 @@ func initApplication(logger *zerolog.Logger, conf *config) *application {
 	httpClient := initHttpClient(logger, conf)
 
 	dummyJsonRepo := repositories.NewDummyJsonRepo(logger, httpClient)
-	quoteService := services.NewQuoteService(logger, dummyJsonRepo)
+	quoteGameRepo := repositories.NewQuoteGameRepo(logger)
+	quoteService := services.NewQuoteService(logger, dummyJsonRepo, quoteGameRepo)
 
 	return &application{
 		logger:       logger,
