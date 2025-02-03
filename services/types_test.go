@@ -31,12 +31,12 @@ func (m *MockedQuoteGameRepo) CreateQuoteGame(_ context.Context, quotes []*model
 	return args.Get(0).(*models.QuoteGame), args.Error(1)
 }
 
-func (m *MockedQuoteGameRepo) ValidateIDAndAnswerIDs(_ context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (answerIDs []int, err error) {
+func (m *MockedQuoteGameRepo) ValidateIDAndAnswerIDs(_ context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (quoteIDs []int, err error) {
 	args := m.Called(id, answers)
 	return args.Get(0).([]int), args.Error(1)
 }
 
-func (m *MockedQuoteGameRepo) ValidateAnswersAndCreateGameResult(_ context.Context, id uuid.UUID, quotes map[int]*models.Quote, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
-	args := m.Called(id, quotes, answers)
+func (m *MockedQuoteGameRepo) ValidateAnswersAndCreateGameResult(_ context.Context, id uuid.UUID, quoteIDs []int, quotes map[int]*models.Quote, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
+	args := m.Called(id, quoteIDs, quotes, answers)
 	return args.Get(0).(*models.QuoteGameResult), args.Error(1)
 }

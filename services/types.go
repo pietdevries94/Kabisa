@@ -14,6 +14,6 @@ type dummyJsonRepo interface {
 
 type quoteGameRepo interface {
 	CreateQuoteGame(ctx context.Context, quotes []*models.Quote) (*models.QuoteGame, error)
-	ValidateIDAndAnswerIDs(ctx context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (answerIDs []int, err error)
-	ValidateAnswersAndCreateGameResult(ctx context.Context, id uuid.UUID, quotes map[int]*models.Quote, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error)
+	ValidateIDAndAnswerIDs(ctx context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (quoteIDs []int, err error)
+	ValidateAnswersAndCreateGameResult(ctx context.Context, id uuid.UUID, quoteIDs []int, quotes map[int]*models.Quote, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error)
 }

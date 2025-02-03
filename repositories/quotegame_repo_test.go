@@ -120,3 +120,5 @@ func TestQuoteGameRepo_GetRandomQuotes(t *testing.T) {
 		expectedError: errors.New("number of quotes should be 3. Given: 2"),
 	}))
 }
+
+// TODO: implement test for ValidateIDAndAnswerIDs and ValidateAnswersAndCreateGameResult

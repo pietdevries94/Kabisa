@@ -53,5 +53,5 @@ func (service *QuoteService) SubmitAnswerToQuoteGame(ctx context.Context, id uui
 		return nil, err
 	}
 
-	return service.quoteGameRepo.ValidateAnswersAndCreateGameResult(ctx, id, quotes, answers)
+	return service.quoteGameRepo.ValidateAnswersAndCreateGameResult(ctx, id, quoteIDs, quotes, answers)
 }

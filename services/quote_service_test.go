@@ -235,7 +235,7 @@ func TestQuoteService_SubmitAnswerToQuoteGame(t *testing.T) {
 				Once().
 				Return(tt.mockedGetQuotesResult, tt.mockedGetQuotesError)
 
-			mockedQuoteGameRepo.On("ValidateAnswersAndCreateGameResult", tt.id, tt.mockedGetQuotesResult, tt.answers).
+			mockedQuoteGameRepo.On("ValidateAnswersAndCreateGameResult", tt.id, tt.mockedValidateIDAndAnswerIDsResult, tt.mockedGetQuotesResult, tt.answers).
 				Once().
 				Return(tt.mockedValidateAnswersAndCreateGameResult, tt.mockedValidateAnswersAndCreateGameError)
 
