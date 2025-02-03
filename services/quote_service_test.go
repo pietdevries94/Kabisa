@@ -207,4 +207,121 @@ func TestQuoteService_CreateQuoteGame(t *testing.T) {
 	))
 }
 
-// TODO: Write TestQuoteService_SubmitAnswerToQuoteGame
+func TestQuoteService_SubmitAnswerToQuoteGame(t *testing.T) {
+	type Test struct {
+		id                                       uuid.UUID
+		answers                                  models.QuoteGameAnswerMap
+		mockedValidateIDAndAnswerIDsResult       []int
+		mockedValidateIDAndAnswerIDsError        error
+		mockedGetQuotesResult                    map[int]*models.Quote
+		mockedGetQuotesError                     error
+		mockedValidateAnswersAndCreateGameResult *models.QuoteGameResult
+		mockedValidateAnswersAndCreateGameError  error
+		expectedResult                           *models.QuoteGameResult
+		expectedError                            error
+	}
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
+
+			mockedQuoteGameRepo := new(MockedQuoteGameRepo)
+			mockedDummyJsonRepo := new(MockedDummyJsonRepo)
+
+			mockedQuoteGameRepo.On("ValidateIDAndAnswerIDs", tt.id, tt.answers).
+				Once().
+				Return(tt.mockedValidateIDAndAnswerIDsResult, tt.mockedValidateIDAndAnswerIDsError)
+
+			mockedDummyJsonRepo.On("GetQuotes", tt.mockedValidateIDAndAnswerIDsResult).
+				Once().
+				Return(tt.mockedGetQuotesResult, tt.mockedGetQuotesError)
+
+			mockedQuoteGameRepo.On("ValidateAnswersAndCreateGameResult", tt.id, tt.mockedGetQuotesResult, tt.answers).
+				Once().
+				Return(tt.mockedValidateAnswersAndCreateGameResult, tt.mockedValidateAnswersAndCreateGameError)
+
+			// We inject the mocked repos into the service and expect the same quote back
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			res, err := NewQuoteService(&logger, mockedDummyJsonRepo, mockedQuoteGameRepo).
+				SubmitAnswerToQuoteGame(context.TODO(), tt.id, tt.answers)
+
+			if tt.expectedError != nil {
+				require.ErrorContains(t, err, tt.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expectedResult, res)
+		}
+	}
+
+	t.Run("returns the result, when given valid parameters", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedValidateIDAndAnswerIDsResult: []int{54, 43, 2},
+		mockedGetQuotesResult: map[int]*models.Quote{
+			54: {ID: 54, Author: "George", Quote: "Hello!"},
+			43: {ID: 43, Author: "William", Quote: "Hi!"},
+			2:  {ID: 2, Author: "Bob", Quote: "Bye!"},
+		},
+		mockedValidateAnswersAndCreateGameResult: &models.QuoteGameResult{
+			ID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			Answers: []*models.QuoteGameActualAnswer{
+				{Quote: models.Quote{ID: 54, Author: "George", Quote: "Hello!"}, Correct: false},
+				{Quote: models.Quote{ID: 43, Author: "William", Quote: "Hi!"}, Correct: false},
+				{Quote: models.Quote{ID: 2, Author: "Bob", Quote: "Bye!"}, Correct: true},
+			},
+		},
+		expectedResult: &models.QuoteGameResult{
+			ID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			Answers: []*models.QuoteGameActualAnswer{
+				{Quote: models.Quote{ID: 54, Author: "George", Quote: "Hello!"}, Correct: false},
+				{Quote: models.Quote{ID: 43, Author: "William", Quote: "Hi!"}, Correct: false},
+				{Quote: models.Quote{ID: 2, Author: "Bob", Quote: "Bye!"}, Correct: true},
+			},
+		},
+	}))
+
+	t.Run("returns the error when ValidateAnswersAndCreateGameResult fails", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedValidateIDAndAnswerIDsResult: []int{54, 43, 2},
+		mockedGetQuotesResult: map[int]*models.Quote{
+			54: {ID: 54, Author: "George", Quote: "Hello!"},
+			43: {ID: 43, Author: "William", Quote: "Hi!"},
+			2:  {ID: 2, Author: "Bob", Quote: "Bye!"},
+		},
+		mockedValidateAnswersAndCreateGameError: errors.New("a brand new error"),
+		expectedError:                           errors.New("a brand new error"),
+	}))
+
+	t.Run("returns the error when GetQuotes fails", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedValidateIDAndAnswerIDsResult: []int{54, 43, 2},
+		mockedGetQuotesError:               errors.New("a brand new error"),
+		expectedError:                      errors.New("a brand new error"),
+	}))
+
+	t.Run("returns the error when alidateIDAndAnswerIDs fails", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			54: "A name",
+			43: "A different name",
+			2:  "Bob",
+		},
+		mockedValidateIDAndAnswerIDsError: errors.New("a brand new error"),
+		expectedError:                     errors.New("a brand new error"),
+	}))
+}
