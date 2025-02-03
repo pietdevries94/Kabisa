@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type PublicError struct {
 	msg string
 }
@@ -14,6 +16,10 @@ func NewPublicError(msg string) *PublicError {
 	return &PublicError{
 		msg: msg,
 	}
+}
+
+func NewPublicErrorf(msg string, args ...any) *PublicError {
+	return NewPublicError(fmt.Sprintf(msg, args...))
 }
 
 var (

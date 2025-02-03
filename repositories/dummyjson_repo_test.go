@@ -137,3 +137,5 @@ func TestDummyJsonRepo_GetRandomQuotes(t *testing.T) {
 		expectedApiToBeCalled: false,
 	}))
 }
+
+// TODO: implement test for GetQuote and GetQuotes
