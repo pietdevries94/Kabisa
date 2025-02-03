@@ -8,6 +8,7 @@ import (
 	"github.com/pietdevries94/Kabisa/openapi"
 )
 
+// GetRandomQuote returns a single ransom quote
 func (app *application) GetRandomQuote(ctx context.Context) (openapi.GetRandomQuoteRes, error) {
 	quote, err := app.quoteService.GetRandomQuote(ctx)
 	if err != nil {
@@ -23,6 +24,7 @@ func (app *application) GetRandomQuote(ctx context.Context) (openapi.GetRandomQu
 	return result, nil
 }
 
+// CreateNewQuoteGame gets 3 random quotes, seperates the quotes from the authors, stores the game info and returns them to the user for them to match together
 func (app *application) CreateNewQuoteGame(ctx context.Context) (openapi.CreateNewQuoteGameRes, error) {
 	game, err := app.quoteService.CreateQuoteGame(ctx)
 	if err != nil {
@@ -45,6 +47,8 @@ func (app *application) CreateNewQuoteGame(ctx context.Context) (openapi.CreateN
 	return result, nil
 }
 
+// SubmitAnswerForQuoteGame receives the answers a user has given to a quote game. The function validates if the game exists and the quote ids are correct.
+// After that the quotes will be retrieved and the result of the game determined and stored in the db. The result of the game is returned.
 func (app *application) SubmitAnswerForQuoteGame(ctx context.Context, answers []openapi.QuoteGameAnswer, params openapi.SubmitAnswerForQuoteGameParams) (openapi.SubmitAnswerForQuoteGameRes, error) {
 	id, err := uuid.Parse(string(params.ID))
 	if err != nil {

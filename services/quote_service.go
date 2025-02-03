@@ -23,6 +23,7 @@ func NewQuoteService(logger *zerolog.Logger, dummyJsonRepo dummyJsonRepo, quoteG
 	}
 }
 
+// GetRandomQuote returns a single ransom quote
 func (service *QuoteService) GetRandomQuote(ctx context.Context) (*models.Quote, error) {
 	res, err := service.dummyJsonRepo.GetRandomQuotes(ctx, 1)
 	if err != nil {
@@ -34,6 +35,7 @@ func (service *QuoteService) GetRandomQuote(ctx context.Context) (*models.Quote,
 	return res[0], nil
 }
 
+// CreateQuoteGame gets 3 random quotes, seperates the quotes from the authors, stores the game info and returns them to the user for them to match together
 func (service *QuoteService) CreateQuoteGame(ctx context.Context) (*models.QuoteGame, error) {
 	quotes, err := service.dummyJsonRepo.GetRandomQuotes(ctx, 3)
 	if err != nil {
@@ -42,6 +44,8 @@ func (service *QuoteService) CreateQuoteGame(ctx context.Context) (*models.Quote
 	return service.quoteGameRepo.CreateQuoteGame(ctx, quotes)
 }
 
+// SubmitAnswerToQuoteGame receives the answers a user has given to a quote game. The function validates if the game exists and the quote ids are correct.
+// After that the quotes will be retrieved and the result of the game determined and stored in the db. The result of the game is returned.
 func (service *QuoteService) SubmitAnswerToQuoteGame(ctx context.Context, id uuid.UUID, answers models.QuoteGameAnswerMap) (*models.QuoteGameResult, error) {
 	quoteIDs, err := service.quoteGameRepo.ValidateIDAndAnswerIDs(ctx, id, answers)
 	if err != nil {
