@@ -5,7 +5,13 @@ This application wraps an api from [dummyjson.com](https://dummyjson.com/quotes)
 - Retrieve a random quote
 - Play a guessing game
 
+## API documentation
+
 The definition of the api can be found in openapi.yaml.
+
+For a graphical representation of the openapi specification, you can use a tool like Redoc:
+
+[Link to API documentation](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/pietdevries94/Kabisa/refs/heads/main/openapi.yaml&nocors)
 
 ## Guessing game
 
