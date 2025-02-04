@@ -5,7 +5,7 @@ This application wraps an api from [dummyjson.com](https://dummyjson.com/quotes)
 - Retrieve a random quote
 - Play a guessing game
 
-The definition of the api can be found in openapi.yaml
+The definition of the api can be found in openapi.yaml.
 
 ## Guessing game
 
@@ -13,20 +13,29 @@ To start a quessing game, you first need to post an empty request to `/quote-gam
 
 ## How to run
 
-// TODO
+Easiest is to download the executable from the [releases](https://github.com/pietdevries94/Kabisa/releases) page and run the executable. By default the application doesn't produce any extra files, so it doesn't matter where you run it from.
+
+You can persist the sqlite database and logs by specifying them in the configuration.
 
 ## Configuration
 
-// TODO
+The application can be configured using environment variables, but for the sake of usability .env files are also supported.
+
+| Environment variable            | Description                                                                                                                                                         | Default                      | Example                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ----------------------------- |
+| KABISAQUOTE_LISTEN_ADDRESS      | The address the application listens on                                                                                                                              | `127.0.0.1:3333`             | `:8080`                       |
+| KABISAQUOTE_HTTP_CLIENT_TIMEOUT | The timeout for the HTTP client (used to fetch quotes)                                                                                                              | `10`                         | `60`                          |
+| KABISAQUOTE_LOG_LEVEL           | The log level for the application                                                                                                                                   | `info`                       | `debug`                       |
+| KABISAQUOTE_LOG_FILE_PATH       | The path to the log file. An empty string disables logging to a file                                                                                                | ``                           | `default.log`                 |
+| KABISAQUOTE_SQLITE_DSN          | The DSN for the SQLite database, by default it's in memory. It's highly recommeded to use `?cache=shared` to prevent database locking issues with parallel requests | `file::memory:?cache=shared` | `file:quotes.db?cache=shared` |
 
 ## How to build
-
-// TODO check if Windows works
 
 To build this application, you need to have one of the following two installed:
 
 - Go 1.23.5+
 - Nix package manager with flakes enabled (see below)
+- make (needs to be installed on Windows. Easiest with `choco install make`)
 
 Open a terminal in this repository and run:
 
@@ -34,7 +43,7 @@ Open a terminal in this repository and run:
 make
 ```
 
-This generates code (if needed), lints the codebase, tests the codebase and builds the application in the path `bin/api` for your current OS and architecture. To run the application on Windows, you might want to rename the result to `api.exe`.
+This generates code (if needed), lints the codebase, tests the codebase and builds the application in the path `bin/api` (`bin\api.exe` on Windows) for your current OS and architecture.
 
 There are targets to build cross-compile the application. The following are added as they are common combinations, but it's trivial to extend this if needed.
 
