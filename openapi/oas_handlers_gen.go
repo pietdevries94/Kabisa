@@ -33,7 +33,7 @@ func (c *codeRecorder) WriteHeader(status int) {
 // handleCreateNewQuoteGameRequest handles createNewQuoteGame operation.
 //
 // The quote game returns three quotes and three authors. In `PUT /quote-game/:id`, the player can
-// respond with their answer. There is a deadline of one minute.
+// respond with their answer. There is a deadline of five minutes.
 //
 // POST /quote-game
 func (s *Server) handleCreateNewQuoteGameRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

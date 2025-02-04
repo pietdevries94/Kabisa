@@ -16,7 +16,7 @@ var _ Handler = UnimplementedHandler{}
 // CreateNewQuoteGame implements createNewQuoteGame operation.
 //
 // The quote game returns three quotes and three authors. In `PUT /quote-game/:id`, the player can
-// respond with their answer. There is a deadline of one minute.
+// respond with their answer. There is a deadline of five minutes.
 //
 // POST /quote-game
 func (UnimplementedHandler) CreateNewQuoteGame(ctx context.Context) (r CreateNewQuoteGameRes, _ error) {

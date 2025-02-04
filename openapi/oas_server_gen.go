@@ -11,7 +11,7 @@ type Handler interface {
 	// CreateNewQuoteGame implements createNewQuoteGame operation.
 	//
 	// The quote game returns three quotes and three authors. In `PUT /quote-game/:id`, the player can
-	// respond with their answer. There is a deadline of one minute.
+	// respond with their answer. There is a deadline of five minutes.
 	//
 	// POST /quote-game
 	CreateNewQuoteGame(ctx context.Context) (CreateNewQuoteGameRes, error)

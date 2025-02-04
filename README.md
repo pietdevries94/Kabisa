@@ -15,7 +15,7 @@ For a graphical representation of the openapi specification, you can use a tool 
 
 ## Guessing game
 
-To start a quessing game, you first need to post an empty request to `/quote-game`. You will receive three quotes and three authors, both sorted alphabetically. The goal of the game is to match which author wrote which quote. This response needs to be send within a minute to `/quote-game/{id}/answer`. For the exact JSON objects needed for this game, please refer to openapi.yaml.
+To start a quessing game, you first need to post an empty request to `/quote-game`. You will receive three quotes and three authors, both sorted alphabetically. The goal of the game is to match which author wrote which quote. This response needs to be send within five minutes to `/quote-game/{id}/answer`. For the exact JSON objects needed for this game, please refer to openapi.yaml.
 
 ## How to run
 

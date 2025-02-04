@@ -125,7 +125,7 @@ func (repo *QuoteGameRepo) ValidateIDAndAnswerIDs(ctx context.Context, id uuid.U
 	}
 
 	// Or expired
-	if time.Now().After(createdAt.Add(time.Minute)) {
+	if time.Now().After(createdAt.Add(time.Minute * 5)) {
 		return nil, models.ErrQuoteGameIdNotFound
 	}
 

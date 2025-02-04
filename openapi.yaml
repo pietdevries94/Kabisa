@@ -77,7 +77,7 @@ paths:
       description:
         The quote game returns three quotes and three authors. In `PUT
         /quote-game/:id`, the player can respond with their answer. There is a
-        deadline of one minute
+        deadline of five minutes
       operationId: createNewQuoteGame
   /quote-game/{id}/answer:
     post:
