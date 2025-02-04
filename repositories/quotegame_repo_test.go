@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"os"
 	"testing"
@@ -29,6 +30,7 @@ func TestQuoteGameRepo_GetRandomQuotes(t *testing.T) {
 			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
 			// We get a new fresh inmem db for each test
 			db := database.Init(&logger, ":memory:")
+			defer db.Close()
 
 			res, err := NewQuoteGameRepo(&logger, db).CreateQuoteGame(context.TODO(), tt.quotes)
 
@@ -121,4 +123,194 @@ func TestQuoteGameRepo_GetRandomQuotes(t *testing.T) {
 	}))
 }
 
-// TODO: implement test for ValidateIDAndAnswerIDs and ValidateAnswersAndCreateGameResult
+func TestQuoteGameRepo_ValidateIDAndAnswerIDs(t *testing.T) {
+	type Test struct {
+		id             uuid.UUID
+		answers        models.QuoteGameAnswerMap
+		prepareDB      func(*sql.DB)
+		expectedResult []int
+		expectedError  error
+	}
+
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
+
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			// We get a new fresh inmem db for each test
+			db := database.Init(&logger, ":memory:")
+			defer db.Close()
+			// And seed it
+			db.Exec( //nolint:errcheck // this is a test
+				"insert into quote_game(id, quote1_id, quote2_id, quote3_id, created_at) values (?,?,?,?,?)",
+				uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+				12,
+				72,
+				33,
+				time.Now(),
+			)
+			if tt.prepareDB != nil {
+				tt.prepareDB(db)
+			}
+
+			res, err := NewQuoteGameRepo(&logger, db).ValidateIDAndAnswerIDs(context.TODO(), tt.id, tt.answers)
+
+			assrt := assert.New(t) // we rename to prevent shadowing
+			if tt.expectedError != nil {
+				require.ErrorContains(t, err, tt.expectedError.Error())
+				assrt.Equal(tt.expectedResult, res)
+				return
+			}
+
+			require.NoError(t, err)
+			assrt.Equal(tt.expectedResult, res)
+		}
+	}
+
+	t.Run("returns the quote ids in the order of the db when everything matches", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			33: "Max",
+			12: "Bob",
+			72: "Jan",
+		},
+		expectedResult: []int{12, 72, 33},
+	}))
+
+	t.Run("throws error if the id doesn't exist", run(Test{
+		id: uuid.MustParse("03f17f15-eeee-eeee-eeee-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			33: "Max",
+			12: "Bob",
+			72: "Jan",
+		},
+		expectedError: models.ErrQuoteGameIdNotFound,
+	}))
+
+	t.Run("throws error if the answer ids don't match with the game", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			99: "Max",
+			12: "Bob",
+			72: "Jan",
+		},
+		expectedError: models.ErrInvalidQuoteID,
+	}))
+
+	t.Run("throws error if the game is expired", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			33: "Max",
+			12: "Bob",
+			72: "Jan",
+		},
+		prepareDB: func(db *sql.DB) {
+			db.Exec( //nolint:errcheck // this is a test
+				"update quote_game set created_at=? where id=?",
+				time.Now().Add(-10*time.Minute),
+				uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			)
+		},
+		expectedError: models.ErrQuoteGameIdNotFound,
+	}))
+
+	t.Run("throws error if the game is already completed", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			33: "Max",
+			12: "Bob",
+			72: "Jan",
+		},
+		prepareDB: func(db *sql.DB) {
+			db.Exec( //nolint:errcheck // this is a test
+				"update quote_game set completed_at=? where id=?",
+				time.Now(),
+				uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			)
+		},
+		expectedError: models.ErrQuoteGameIdNotFound,
+	}))
+}
+
+func TestQuoteGameRepo_ValidateAnswersAndCreateGameResult(t *testing.T) {
+	type Test struct {
+		id             uuid.UUID
+		quoteIDs       []int
+		quotes         map[int]*models.Quote
+		answers        models.QuoteGameAnswerMap
+		expectedResult *models.QuoteGameResult
+		expectedError  error
+	}
+
+	run := func(tt Test) func(t *testing.T) {
+		return func(t *testing.T) {
+			t.Helper()
+
+			logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+			// We get a new fresh inmem db for each test
+			db := database.Init(&logger, ":memory:")
+			defer db.Close()
+			// And seed it
+			db.Exec( //nolint:errcheck // this is a test
+				"insert into quote_game(id, quote1_id, quote2_id, quote3_id, created_at) values (?,?,?,?,?)",
+				uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+				12,
+				72,
+				33,
+				time.Now(),
+			)
+
+			res, err := NewQuoteGameRepo(&logger, db).ValidateAnswersAndCreateGameResult(context.TODO(), tt.id, tt.quoteIDs, tt.quotes, tt.answers)
+
+			assrt := assert.New(t) // we rename to prevent shadowing
+			req := require.New(t)
+			if tt.expectedError != nil {
+				req.ErrorContains(err, tt.expectedError.Error())
+				assrt.Equal(tt.expectedResult, res)
+				return
+			}
+
+			req.NoError(err)
+			assrt.Equal(tt.expectedResult, res)
+
+			// We want to check if the state is actually set in the db
+			var q1_correct, q2_correct, q3_correct sql.NullBool
+			var completed_at sql.NullTime
+			err = db.QueryRow("select quote1_correct, quote2_correct, quote3_correct, completed_at from quote_game where id = ?", tt.id).
+				Scan(&q1_correct, &q2_correct, &q3_correct, &completed_at)
+			req.NoError(err)
+
+			req.True(q1_correct.Valid)
+			req.True(q2_correct.Valid)
+			req.True(q3_correct.Valid)
+			req.True(completed_at.Valid)
+
+			assrt.Equal(tt.expectedResult.Answers[0].Correct, q1_correct.Bool)
+			assrt.Equal(tt.expectedResult.Answers[1].Correct, q2_correct.Bool)
+			assrt.Equal(tt.expectedResult.Answers[2].Correct, q3_correct.Bool)
+		}
+	}
+
+	t.Run("checks the answers and stores them in the database", run(Test{
+		id: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+		answers: models.QuoteGameAnswerMap{
+			33: "Max",
+			12: "Bob",
+			72: "Jan",
+		},
+		quoteIDs: []int{12, 72, 33},
+		quotes: map[int]*models.Quote{
+			33: {Author: "Max", Quote: "Hey", ID: 33},
+			12: {Author: "Bob", Quote: "Hi", ID: 12},
+			72: {Author: "Someone else", Quote: "Bye", ID: 72},
+		},
+		expectedResult: &models.QuoteGameResult{
+			ID: uuid.MustParse("03f17f15-5d0a-49ea-aa05-039f2f18373e"),
+			Answers: []*models.QuoteGameActualAnswer{
+				{Quote: models.Quote{Author: "Bob", Quote: "Hi", ID: 12}, Correct: true},
+				{Quote: models.Quote{Author: "Someone else", Quote: "Bye", ID: 72}, Correct: false},
+				{Quote: models.Quote{Author: "Max", Quote: "Hey", ID: 33}, Correct: true},
+			},
+		},
+	}))
+}
