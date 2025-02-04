@@ -54,22 +54,6 @@ func (repo *DummyJsonRepo) GetRandomQuotes(ctx context.Context, amount int) ([]*
 	return quotes, nil
 }
 
-// GetQuotes retrieves a map of quotes from an api. The api only supports doing this one by one.
-// It does so synchronized, but if this function needs to handle larger numbers, it could be
-// refactored to build up the map async with a limit of parallel fetches.
-// If any request errors, we return an error and no map.
-func (repo *DummyJsonRepo) GetQuotes(ctx context.Context, ids []int) (map[int]*models.Quote, error) {
-	m := map[int]*models.Quote{}
-	for _, id := range ids {
-		quote, err := repo.GetQuote(ctx, id)
-		if err != nil {
-			return nil, err
-		}
-		m[id] = quote
-	}
-	return m, nil
-}
-
 // GetQuote gets a quote by id, or returns a public error when not found. Other errors get logged
 func (repo *DummyJsonRepo) GetQuote(ctx context.Context, id int) (*models.Quote, error) {
 	url := fmt.Sprintf("https://dummyjson.com/quotes/%d", id)
@@ -118,4 +102,20 @@ func (repo *DummyJsonRepo) get(ctx context.Context, url string) (*http.Response,
 	}
 
 	return resp, nil
+}
+
+// GetQuotes retrieves a map of quotes from an api. The api only supports doing this one by one.
+// It does so synchronized, but if this function needs to handle larger numbers, it could be
+// refactored to build up the map async with a limit of parallel fetches.
+// If any request errors, we return an error and no map.
+func (repo *DummyJsonRepo) GetQuotes(ctx context.Context, ids []int) (map[int]*models.Quote, error) {
+	m := map[int]*models.Quote{}
+	for _, id := range ids {
+		quote, err := repo.GetQuote(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		m[id] = quote
+	}
+	return m, nil
 }
