@@ -87,7 +87,7 @@ func initConfig() *config {
 		conf.logFilePath = val
 	}
 	if val, found := os.LookupEnv("KABISAQUOTE_SQLITE_DSN"); found {
-		conf.logFilePath = val
+		conf.sqliteDSN = val
 	}
 
 	return conf
